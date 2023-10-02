@@ -113,10 +113,10 @@ class Company:
         self.__meeting_rooms = self.__generate_meeting_rooms()
 
     def dump(self):
-        with open("./sql/employee.sql", "w") as f:
+        with open("../sql/employee.sql", "w") as f:
             for meeting_room in self.__employees:
                 f.write("%s\n" % meeting_room.get_insert_query())
-        with open("./sql/meeting_room.sql", "w") as f:
+        with open("../sql/meeting_room.sql", "w") as f:
             for meeting_room in self.__meeting_rooms:
                 f.write("%s\n" % meeting_room.get_insert_query())
 
@@ -138,7 +138,7 @@ class Company:
 
 
 def main():
-    with open("./names.json", "r") as f:
+    with open("../data/names.json", "r") as f:
         names = json.load(f)
     generator = Generator(names["first_names"], names["last_names"], 10, 10)
     company = Company(generator, 100, 20)
