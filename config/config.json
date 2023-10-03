@@ -29,7 +29,10 @@
   ],
   "max_employees": 100,
   "max_meeting_rooms": 2,
-  "max_meetings": 5,
+  "max_meetings": 50,
+  "max_meetings_per_day": 21,
   "max_rooms": 10,
-  "max_floors": 10
+  "max_floors": 10,
+  "start_day": "2023-09-01",
+  "num_days": 5
 }

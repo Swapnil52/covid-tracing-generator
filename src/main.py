@@ -2,6 +2,7 @@ import json
 
 from random import randint
 from inflection import underscore
+from datetime import datetime, timedelta
 
 
 class MySQLInsertable:
@@ -58,11 +59,14 @@ class MeetingRoom(MySQLInsertable):
 
 
 class Meeting(MySQLInsertable):
-    def __init__(self, _id, meeting_room_id: int, start_time: int, end_time: int):
+    def __init__(self, _id, meeting_room_id: int, start_time: str, end_time: str):
         self.__id = _id
         self.__meeting_room_id = meeting_room_id
         self.__start_time = start_time
         self.__end_time = end_time
+
+    def get_start_time(self):
+        return self.__start_time
 
 
 class Config:
@@ -74,8 +78,12 @@ class Config:
             self.max_employees = config["max_employees"]
             self.max_meeting_rooms = config["max_meeting_rooms"]
             self.max_meetings = config["max_meetings"]
+            self.max_meetings_per_day = config["max_meetings_per_day"]
             self.max_rooms = config["max_rooms"]
             self.max_floors = config["max_floors"]
+            start_day_tokens = [int(token) for token in config["start_day"].split('-')]
+            self.start_day = datetime(year=start_day_tokens[0], month=start_day_tokens[1], day=start_day_tokens[2])
+            self.num_days = config["num_days"]
 
 
 class Generator:
@@ -85,8 +93,11 @@ class Generator:
         self.__max_rooms = config.max_rooms
         self.__max_floors = config.max_floors
         self.__max_meeting_rooms = config.max_meeting_rooms
-        self.__free_meeting_room_intervals = [[(8, 18)] for _ in range(0, config.max_meeting_rooms)]
-        self.__free_meeting_room_ids = [i for i in range(0, config.max_meeting_rooms)]
+        self.__free_meeting_room_intervals = {
+            config.start_day + timedelta(days=i): {j: [(8, 18)] for j in range(0, config.max_meeting_rooms)}
+            for i in range(0, config.num_days)}
+        self.__free_meeting_room_ids = {config.start_day + timedelta(days=i): [j for j in range(0, config.max_meeting_rooms)]
+                                        for i in range(0, config.num_days)}
 
     def employee(self, _id) -> Employee:
         name = self.__generate_name()
@@ -100,10 +111,11 @@ class Generator:
         floor_number = randint(1, self.__max_floors)
         return MeetingRoom(_id, floor_number)
 
-    def meeting(self, _id):
-        meeting_room_id, interval = self.__pick_meeting_room_and_time()
-        start = interval[0]
-        end = interval[1]
+    def meeting(self, _id: int, day: datetime) -> Meeting:
+        meeting_room_id, interval = self.__pick_meeting_room_and_time(self.__free_meeting_room_ids[day],
+                                                                      self.__free_meeting_room_intervals[day])
+        start = str(day + timedelta(hours=interval[0]))
+        end = str(day + timedelta(hours=interval[1]))
         return Meeting(_id, meeting_room_id, start, end)
 
     def __generate_name(self) -> str:
@@ -132,22 +144,31 @@ class Generator:
         suffix = randint(0, 999)
         return "%s.%s%s@company.com" % (tokens[0], tokens[1], suffix)
 
-    def __pick_meeting_room_and_time(self):
-        if len(self.__free_meeting_room_ids) == 0:
+    def __pick_meeting_room_and_time(self, free_meeting_room_ids: list, free_meeting_room_intervals: dict):
+        if len(free_meeting_room_ids) == 0:
             raise Exception("No more free meeting rooms left!")
-        free_meeting_room_idx = randint(0, len(self.__free_meeting_room_ids) - 1)
-        free_meeting_room_id = self.__free_meeting_room_ids[free_meeting_room_idx]
-        free_intervals = self.__free_meeting_room_intervals[free_meeting_room_id]
-        selected_interval_idx = randint(0, len(free_intervals) - 1)
-        selected_interval = free_intervals[selected_interval_idx]
+        meeting_room_id = self.__get_free_meeting_room_id(free_meeting_room_ids)
+        free_intervals = free_meeting_room_intervals[meeting_room_id]
+        selected_interval = self.__select_interval(free_intervals)
         assert len(selected_interval) > 0
-        free_intervals.pop(selected_interval_idx)
+        free_intervals.remove(selected_interval)
         picked, remaining = self.__split_interval(selected_interval)
         free_intervals.extend(remaining)
         if len(free_intervals) == 0:
-            self.__free_meeting_room_intervals.pop(free_meeting_room_id)
-            self.__free_meeting_room_ids.pop(free_meeting_room_idx)
-        return free_meeting_room_id, picked
+            free_meeting_room_intervals.pop(meeting_room_id)
+            free_meeting_room_ids.remove(meeting_room_id)
+        return meeting_room_id, picked
+
+    @staticmethod
+    def __get_free_meeting_room_id(free_meeting_room_ids: list) -> int:
+        index = randint(0, len(free_meeting_room_ids) - 1)
+        meeting_room_id = free_meeting_room_ids[index]
+        return meeting_room_id
+
+    @staticmethod
+    def __select_interval(free_meeting_room_intervals: list) -> tuple:
+        index = randint(0, len(free_meeting_room_intervals) - 1)
+        return free_meeting_room_intervals[index]
 
     @staticmethod
     def __split_interval(interval: tuple) -> tuple:
@@ -163,6 +184,7 @@ class Generator:
 
 class Company:
     def __init__(self, config: Config, generator: Generator):
+        self.__config = config
         self.__generator = generator
         self.__max_employees = config.max_employees
         self.__max_meeting_rooms = config.max_meeting_rooms
@@ -195,9 +217,20 @@ class Company:
         return meeting_rooms
 
     def __generate_meetings(self):
+        start_day = self.__config.start_day
+        num_days = self.__config.num_days
         meetings = []
-        for idx in range(self.__max_meetings):
-            meetings.append(self.__generator.meeting(idx))
+        start_id = 0
+        for i in range(0, num_days):
+            day_meetings = self.__generate_meetings_for_day(start_id, start_day + timedelta(days=i))
+            meetings.extend(day_meetings)
+            start_id += len(day_meetings)
+        return meetings
+
+    def __generate_meetings_for_day(self, start_id: int, day: datetime):
+        meetings = []
+        for idx in range(self.__config.max_meetings_per_day):
+            meetings.append(self.__generator.meeting(start_id + idx, day))
         return meetings
 
 
