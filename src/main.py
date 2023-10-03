@@ -202,7 +202,7 @@ class Company:
 
     def __generate_meeting_rooms(self):
         meeting_rooms = []
-        for idx in range(self.__config.max_employees):
+        for idx in range(self.__config.max_meeting_rooms):
             meeting_rooms.append(self.__generator.meeting_room(idx))
         return meeting_rooms
 
