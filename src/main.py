@@ -41,7 +41,6 @@ class MySQLInsertable:
 
 
 class Employee(MySQLInsertable):
-
     def __init__(self, _id: str, name: str, office_number: int, floor_number: int, phone_number: str,
                  email_id: str):
         self.__id = _id
@@ -58,12 +57,36 @@ class MeetingRoom(MySQLInsertable):
         self.__floor_number = floor_number
 
 
+class Meeting(MySQLInsertable):
+    def __init__(self, _id, meeting_room_id: int, start_time: int, end_time: int):
+        self.__id = _id
+        self.__meeting_room_id = meeting_room_id
+        self.__start_time = start_time
+        self.__end_time = end_time
+
+
+class Config:
+    def __init__(self, file_path):
+        with open(file_path, "r") as f:
+            config = json.load(f)
+            self.first_names = config["first_names"]
+            self.last_names = config["last_names"]
+            self.max_employees = config["max_employees"]
+            self.max_meeting_rooms = config["max_meeting_rooms"]
+            self.max_meetings = config["max_meetings"]
+            self.max_rooms = config["max_rooms"]
+            self.max_floors = config["max_floors"]
+
+
 class Generator:
-    def __init__(self, first_names: list, last_names: list, max_rooms: int, max_floors: int):
-        self.__first_names = first_names
-        self.__last_names = last_names
-        self.__max_rooms = max_rooms
-        self.__max_floors = max_floors
+    def __init__(self, config: Config):
+        self.__first_names = config.first_names
+        self.__last_names = config.last_names
+        self.__max_rooms = config.max_rooms
+        self.__max_floors = config.max_floors
+        self.__max_meeting_rooms = config.max_meeting_rooms
+        self.__free_meeting_room_intervals = [[(8, 18)] for _ in range(0, config.max_meeting_rooms)]
+        self.__free_meeting_room_ids = [i for i in range(0, config.max_meeting_rooms)]
 
     def employee(self, _id) -> Employee:
         name = self.__generate_name()
@@ -76,6 +99,12 @@ class Generator:
     def meeting_room(self, _id):
         floor_number = randint(1, self.__max_floors)
         return MeetingRoom(_id, floor_number)
+
+    def meeting(self, _id):
+        meeting_room_id, interval = self.__pick_meeting_room_and_time()
+        start = interval[0]
+        end = interval[1]
+        return Meeting(_id, meeting_room_id, start, end)
 
     def __generate_name(self) -> str:
         i = randint(0, len(self.__first_names) - 1)
@@ -103,22 +132,55 @@ class Generator:
         suffix = randint(0, 999)
         return "%s.%s%s@company.com" % (tokens[0], tokens[1], suffix)
 
+    def __pick_meeting_room_and_time(self):
+        if len(self.__free_meeting_room_ids) == 0:
+            raise Exception("No more free meeting rooms left!")
+        free_meeting_room_idx = randint(0, len(self.__free_meeting_room_ids) - 1)
+        free_meeting_room_id = self.__free_meeting_room_ids[free_meeting_room_idx]
+        free_intervals = self.__free_meeting_room_intervals[free_meeting_room_id]
+        selected_interval_idx = randint(0, len(free_intervals) - 1)
+        selected_interval = free_intervals[selected_interval_idx]
+        assert len(selected_interval) > 0
+        free_intervals.pop(selected_interval_idx)
+        picked, remaining = self.__split_interval(selected_interval)
+        free_intervals.extend(remaining)
+        if len(free_intervals) == 0:
+            self.__free_meeting_room_intervals.pop(free_meeting_room_id)
+            self.__free_meeting_room_ids.pop(free_meeting_room_idx)
+        return free_meeting_room_id, picked
+
+    @staticmethod
+    def __split_interval(interval: tuple) -> tuple:
+        s = interval[0]
+        e = interval[1]
+        s_prime = randint(s, e - 1)
+        e_prime = s_prime + 1
+        left = (s, s_prime)
+        picked = (s_prime, e_prime)
+        right = (e_prime, e)
+        return picked, [interval for interval in [left, right] if interval[0] < interval[1]]
+
 
 class Company:
-    def __init__(self, generator: Generator, max_employees: int, max_meeting_rooms: int):
+    def __init__(self, config: Config, generator: Generator):
         self.__generator = generator
-        self.__max_employees = max_employees
-        self.max_meeting_rooms = max_meeting_rooms
+        self.__max_employees = config.max_employees
+        self.__max_meeting_rooms = config.max_meeting_rooms
+        self.__max_meetings = config.max_meetings
         self.__employees = self.__generate_employees()
         self.__meeting_rooms = self.__generate_meeting_rooms()
+        self.__meetings = self.__generate_meetings()
 
     def dump(self):
-        with open("../sql/employee.sql", "w") as f:
+        with open("./sql/employee.sql", "w") as f:
             for meeting_room in self.__employees:
                 f.write("%s\n" % meeting_room.get_insert_query())
-        with open("../sql/meeting_room.sql", "w") as f:
+        with open("./sql/meeting_room.sql", "w") as f:
             for meeting_room in self.__meeting_rooms:
                 f.write("%s\n" % meeting_room.get_insert_query())
+        with open("./sql/meeting.sql", "w") as f:
+            for meeting in self.__meetings:
+                f.write("%s\n" % meeting.get_insert_query())
 
     def __generate_employees(self) -> list:
         employees = []
@@ -132,19 +194,20 @@ class Company:
             meeting_rooms.append(self.__generator.meeting_room(idx))
         return meeting_rooms
 
-    @property
-    def employees(self):
-        return self.__employees
+    def __generate_meetings(self):
+        meetings = []
+        for idx in range(self.__max_meetings):
+            meetings.append(self.__generator.meeting(idx))
+        return meetings
 
 
 def main():
-    with open("../data/names.json", "r") as f:
-        names = json.load(f)
-    generator = Generator(names["first_names"], names["last_names"], 10, 10)
-    company = Company(generator, 100, 20)
+    config = Config("./config/config.json")
+    generator = Generator(config)
+    company = Company(config, generator)
     company.dump()
 
 
 if __name__ == '__main__':
     main()
-    pass
+    # scratch()

@@ -12,7 +12,7 @@
     "rohan",
     "akshat",
     "vedant"
-],
+  ],
   "last_names": [
     "agarwal",
     "saini",
@@ -26,6 +26,10 @@
     "samtani",
     "jain",
     "bharat"
-  ]
-
+  ],
+  "max_employees": 100,
+  "max_meeting_rooms": 2,
+  "max_meetings": 5,
+  "max_rooms": 10,
+  "max_floors": 10
 }
