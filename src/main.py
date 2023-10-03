@@ -88,27 +88,20 @@ class Config:
 
 class Generator:
     def __init__(self, config: Config):
-        self.__first_names = config.first_names
-        self.__last_names = config.last_names
-        self.__max_rooms = config.max_rooms
-        self.__max_floors = config.max_floors
-        self.__max_meeting_rooms = config.max_meeting_rooms
-        self.__free_meeting_room_intervals = {
-            config.start_day + timedelta(days=i): {j: [(8, 18)] for j in range(0, config.max_meeting_rooms)}
-            for i in range(0, config.num_days)}
-        self.__free_meeting_room_ids = {config.start_day + timedelta(days=i): [j for j in range(0, config.max_meeting_rooms)]
-                                        for i in range(0, config.num_days)}
+        self.__config = config
+        self.__free_meeting_room_intervals = {config.start_day + timedelta(days=i): {j: [(8, 18)] for j in range(0, config.max_meeting_rooms)} for i in range(0, config.num_days)}
+        self.__free_meeting_room_ids = {config.start_day + timedelta(days=i): [j for j in range(0, config.max_meeting_rooms)] for i in range(0, config.num_days)}
 
     def employee(self, _id) -> Employee:
         name = self.__generate_name()
-        office_number = randint(1, self.__max_rooms)
-        floor_number = randint(1, self.__max_floors)
+        office_number = randint(1, self.__config.max_rooms)
+        floor_number = randint(1, self.__config.max_floors)
         phone_number = self.__generate_number()
         email_id = self.__generate_email(name)
         return Employee(_id, name, office_number, floor_number, phone_number, email_id)
 
     def meeting_room(self, _id):
-        floor_number = randint(1, self.__max_floors)
+        floor_number = randint(1, self.__config.max_floors)
         return MeetingRoom(_id, floor_number)
 
     def meeting(self, _id: int, day: datetime) -> Meeting:
@@ -119,10 +112,10 @@ class Generator:
         return Meeting(_id, meeting_room_id, start, end)
 
     def __generate_name(self) -> str:
-        i = randint(0, len(self.__first_names) - 1)
-        first_name = self.__first_names[i]
-        j = randint(0, len(self.__last_names) - 1)
-        last_name = self.__last_names[j]
+        i = randint(0, len(self.__config.first_names) - 1)
+        first_name = self.__config.first_names[i]
+        j = randint(0, len(self.__config.last_names) - 1)
+        last_name = self.__config.last_names[j]
         return "%s %s" % (first_name, last_name)
 
     @staticmethod
@@ -186,9 +179,6 @@ class Company:
     def __init__(self, config: Config, generator: Generator):
         self.__config = config
         self.__generator = generator
-        self.__max_employees = config.max_employees
-        self.__max_meeting_rooms = config.max_meeting_rooms
-        self.__max_meetings = config.max_meetings
         self.__employees = self.__generate_employees()
         self.__meeting_rooms = self.__generate_meeting_rooms()
         self.__meetings = self.__generate_meetings()
@@ -206,13 +196,13 @@ class Company:
 
     def __generate_employees(self) -> list:
         employees = []
-        for idx in range(self.__max_employees):
+        for idx in range(self.__config.max_employees):
             employees.append(self.__generator.employee(idx))
         return employees
 
     def __generate_meeting_rooms(self):
         meeting_rooms = []
-        for idx in range(self.__max_employees):
+        for idx in range(self.__config.max_employees):
             meeting_rooms.append(self.__generator.meeting_room(idx))
         return meeting_rooms
 
