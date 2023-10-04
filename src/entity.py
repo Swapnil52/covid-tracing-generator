@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from inflection import underscore
 
 
@@ -47,6 +49,10 @@ class Employee(MySQLInsertable):
         self.__office_number = office_number
         self.__floor_number = floor_number
 
+    def get_id(self):
+        return self.__id
+
+
 
 class MeetingRoom(MySQLInsertable):
     def __init__(self, _id, floor_number):
@@ -77,3 +83,19 @@ class EmployeeMeeting(MySQLInsertable):
     def __init__(self, employee_id: int, meeting_id: int):
         self.__employee_id = employee_id
         self.__meeting_id = meeting_id
+
+
+class Symptom(MySQLInsertable):
+    def __init__(self, _id: int, employee_id: str, reported_at: datetime, symptom_id: int):
+        self.__id = _id
+        self.__employee_id = employee_id
+        self.__reported_at = reported_at
+        self.__symptom_id = symptom_id
+
+
+class Scan(MySQLInsertable):
+    def __init__(self, _id: int, scanned_at: datetime, employee_id: int, temperature: float):
+        self.__id = _id
+        self.__scanned_at = scanned_at
+        self.__employee_id = employee_id
+        self.__temperature = temperature

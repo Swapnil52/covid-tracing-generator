@@ -17,3 +17,6 @@ class Config:
             start_day_tokens = [int(token) for token in config["start_day"].split('-')]
             self.start_day = datetime(year=start_day_tokens[0], month=start_day_tokens[1], day=start_day_tokens[2])
             self.num_days = config["num_days"]
+            self.max_symptomatic_employees_per_day = config["max_symptomatic_employees_per_day"]
+            self.max_symptoms = config["max_symptoms"]
+            self.symptoms = config["symptoms"]

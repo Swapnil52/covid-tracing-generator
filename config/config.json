@@ -27,12 +27,21 @@
     "jain",
     "bharat"
   ],
-  "max_employees": 100,
-  "max_meeting_rooms": 2,
+  "max_employees": 25,
+  "max_meeting_rooms": 10,
   "max_meetings": 50,
-  "max_meetings_per_day": 20,
+  "max_meetings_per_day": 5,
   "max_rooms": 10,
   "max_floors": 10,
   "start_day": "2023-09-01",
-  "num_days": 5
+  "num_days": 5,
+  "max_symptomatic_employees_per_day": 1,
+  "max_symptoms": 5,
+  "symptoms": [
+    "cough",
+    "cold",
+    "fever",
+    "body ache",
+    "loss of taste/smell"
+  ]
 }

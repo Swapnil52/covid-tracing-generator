@@ -1,9 +1,9 @@
 from datetime import timedelta, datetime
-from random import randint, sample
+from random import randint, sample, uniform
 from typing import List
 
-from src.entity import Employee, MeetingRoom, Meeting, EmployeeMeeting
 from src.config import Config
+from src.entity import Employee, MeetingRoom, Meeting, EmployeeMeeting, Symptom, Scan
 
 
 class Generator:
@@ -13,6 +13,10 @@ class Generator:
         self.__meeting_rooms = []
         self.__meetings = []
         self.__employee_meetings = []
+        self.__symptoms = []
+        self.__symptomatic_employees = []
+        self.__scans = []
+        self.__employee_symptoms = []
         self.__free_meeting_room_intervals = {
             config.start_day + timedelta(days=i): {
                 j: [(8, 18)]
@@ -36,7 +40,9 @@ class Generator:
         self.__employees = self.__generate_employees()
         self.__meeting_rooms = self.__generate_meeting_rooms()
         self.__meetings, self.__employee_meetings = self.__generate_meetings()
-        print(self.__employee_meetings)
+        self.__symptoms = self.__generate_symptoms()
+        self.__scans = self.__generate_scans()
+        self.__symptoms = self.__generate_symptoms()
 
     def dump(self):
         with open("./sql/employee.sql", "w") as f:
@@ -51,6 +57,12 @@ class Generator:
         with open("./sql/employee_meeting.sql", "w") as f:
             for employee_meeting in self.__employee_meetings:
                 f.write("%s\n" % employee_meeting.get_insert_query())
+        with open("./sql/scan.sql", "w") as f:
+            for scan in self.__scans:
+                f.write("%s\n" % scan.get_insert_query())
+        with open("./sql/symptom.sql", "w") as f:
+            for symptom in self.__symptoms:
+                f.write("%s\n" % symptom.get_insert_query())
 
     def __generate_employees(self) -> list:
         employees = []
@@ -95,6 +107,36 @@ class Generator:
         for selected_employee in selected_employees:
             free_employees.remove(selected_employee)
         return [EmployeeMeeting(employee_id, meeting.get_id()) for employee_id in selected_employees]
+
+    def __generate_symptoms(self) -> List[Symptom]:
+        symptoms = []
+        symptom_id = 0
+        for delta in range(self.__config.num_days):
+            symptomatic_employees = sample(self.__employees, k=self.__config.max_symptomatic_employees_per_day)
+            for employee in symptomatic_employees:
+                symptom = randint(1, self.__config.max_symptoms)
+                reported_at = self.__config.start_day + timedelta(days=delta, hours=randint(19, 23))
+                symptoms.append(Symptom(symptom_id, employee.get_id(), reported_at, symptom))
+        return symptoms
+
+    def __generate_scans(self) -> List[Scan]:
+        scans = []
+        scan_id = 0
+        for i in range(self.__config.num_days):
+            for __employee in self.__employees:
+                scanned_at = self.__config.start_day + timedelta(days=i, hours=7, minutes=randint(0, 59))
+                temperature = self.__get_temperature()
+                scans.append(Scan(scan_id, scanned_at, __employee.get_id(), temperature))
+                scan_id += 1
+        return scans
+
+    @staticmethod
+    def __get_temperature():
+        i = randint(1, 7)
+        temperature = 98.6
+        if i == 7:
+            temperature += uniform(0.5, 4.0)
+        return temperature
 
     def __employee(self, _id) -> Employee:
         name = self.__generate_name()
