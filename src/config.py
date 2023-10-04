@@ -20,3 +20,7 @@ class Config:
             self.max_symptomatic_employees_per_day = config["max_symptomatic_employees_per_day"]
             self.max_symptoms = config["max_symptoms"]
             self.symptoms = config["symptoms"]
+            self.locations = config["locations"]
+            self.symptom_test_delay = config["symptom_test_delay"]
+            self.scan_test_delay = config["scan_test_delay"]
+            self.test_results = config["test_results"]

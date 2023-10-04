@@ -3,7 +3,7 @@ from random import randint, sample, uniform
 from typing import List
 
 from src.config import Config
-from src.entity import Employee, MeetingRoom, Meeting, EmployeeMeeting, Symptom, Scan
+from src.entity import Employee, MeetingRoom, Meeting, EmployeeMeeting, Symptom, Scan, Test
 
 
 class Generator:
@@ -17,6 +17,7 @@ class Generator:
         self.__symptomatic_employees = []
         self.__scans = []
         self.__employee_symptoms = []
+        self.__tests = []
         self.__free_meeting_room_intervals = {
             config.start_day + timedelta(days=i): {
                 j: [(8, 18)]
@@ -43,6 +44,7 @@ class Generator:
         self.__symptoms = self.__generate_symptoms()
         self.__scans = self.__generate_scans()
         self.__symptoms = self.__generate_symptoms()
+        self.__tests = self.__generate_tests()
 
     def dump(self):
         with open("./sql/employee.sql", "w") as f:
@@ -63,6 +65,9 @@ class Generator:
         with open("./sql/symptom.sql", "w") as f:
             for symptom in self.__symptoms:
                 f.write("%s\n" % symptom.get_insert_query())
+        with open("./sql/test.sql", "w") as f:
+            for test in self.__tests:
+                f.write("%s\n" % test.get_insert_query())
 
     def __generate_employees(self) -> list:
         employees = []
@@ -129,6 +134,32 @@ class Generator:
                 scans.append(Scan(scan_id, scanned_at, __employee.get_id(), temperature))
                 scan_id += 1
         return scans
+
+    def __generate_tests(self) -> List[Test]:
+        tests = []
+        test_id = 0
+        for symptom in self.__symptoms:
+            location = sample(self.__config.locations, k=1)[0]
+            tested_at = symptom.get_reported_at() + timedelta(hours=self.__config.symptom_test_delay)
+            employee_id = symptom.get_employee_id()
+            result = self.__get_result()
+            tests.append(Test(test_id, location, tested_at, employee_id, result))
+            test_id += 1
+        for scan in self.__scans:
+            employee_id = scan.get_employee_id()
+            location = self.__config.locations[0]
+            tested_at = scan.get_scanned_at() + timedelta(hours=self.__config.scan_test_delay)
+            result = self.__get_result()
+            tests.append(Test(test_id, location, tested_at, employee_id, result))
+            test_id += 1
+        return tests
+
+    @staticmethod
+    def __get_result():
+        i = randint(1, 7)
+        if i == 7:
+            return "POSITIVE"
+        return "NEGATIVE"
 
     @staticmethod
     def __get_temperature():

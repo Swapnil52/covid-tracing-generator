@@ -43,5 +43,16 @@
     "fever",
     "body ache",
     "loss of taste/smell"
+  ],
+  "locations": [
+    "hospital",
+    "onsite",
+    "clinic"
+  ],
+  "symptom_test_delay": 6,
+  "scan_test_delay": 1,
+  "test_results": [
+    "POSITIVE",
+    "NEGATIVE"
   ]
 }

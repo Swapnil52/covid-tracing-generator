@@ -53,7 +53,6 @@ class Employee(MySQLInsertable):
         return self.__id
 
 
-
 class MeetingRoom(MySQLInsertable):
     def __init__(self, _id, floor_number):
         self.__id = _id
@@ -92,6 +91,12 @@ class Symptom(MySQLInsertable):
         self.__reported_at = reported_at
         self.__symptom_id = symptom_id
 
+    def get_employee_id(self):
+        return self.__employee_id
+
+    def get_reported_at(self):
+        return self.__reported_at
+
 
 class Scan(MySQLInsertable):
     def __init__(self, _id: int, scanned_at: datetime, employee_id: int, temperature: float):
@@ -99,3 +104,17 @@ class Scan(MySQLInsertable):
         self.__scanned_at = scanned_at
         self.__employee_id = employee_id
         self.__temperature = temperature
+
+    def get_employee_id(self):
+        return self.__employee_id
+
+    def get_scanned_at(self):
+        return self.__scanned_at
+
+class Test(MySQLInsertable):
+    def __init__(self, _id: int, location: str, tested_at: datetime, employee_id: int, result: str):
+        self.__id = _id
+        self.__location = location
+        self.__tested_at = tested_at
+        self.__employee_id = employee_id
+        self.__result = result
