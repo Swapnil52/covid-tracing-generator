@@ -79,8 +79,9 @@ class Generator:
 
             # generate tests for the notifications, scans and symptoms
             tests = self.__generate_tests_for_today(today, mandatory_notifications, scans, symptoms)
-            tests.extend(self.__generate_tests_for_sick_employees(today, sick_employee_ids))
+            sick_employee_tests = self.__generate_tests_for_sick_employees(today, sick_employee_ids)
             self.__tests.extend(tests)
+            self.__tests.extend(sick_employee_tests)
 
             # update cases for each test
             self.__update_cases_for_today(tests)
