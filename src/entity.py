@@ -40,17 +40,23 @@ class MySQLInsertable:
 
 
 class Employee(MySQLInsertable):
-    def __init__(self, _id: str, name: str, office_number: int, floor_number: int, phone_number: str,
+    __ID = 0
+
+    def __init__(self, _id: int, name: str, office_number: int, floor_number: int, phone_number: str,
                  email_id: str):
-        self.__id = _id
+        self.__id = Employee.__ID
         self.__name = name
         self.__phone_number = phone_number
         self.__email_id = email_id
         self.__office_number = office_number
         self.__floor_number = floor_number
+        Employee.__ID += 1
 
     def get_id(self):
         return self.__id
+
+    def get_floor_number(self):
+        return self.__floor_number
 
 
 class MeetingRoom(MySQLInsertable):
@@ -60,13 +66,16 @@ class MeetingRoom(MySQLInsertable):
 
 
 class Meeting(MySQLInsertable):
-    def __init__(self, _id, meeting_room_id: int, start_time: str, end_time: str, start_hour: int, end_hour: int):
-        self.__id = _id
+    __ID = 0
+
+    def __init__(self, meeting_room_id: int, start_time: datetime, end_time: datetime, start_hour: int, end_hour: int):
+        self.__id = Meeting.__ID
         self.__meeting_room_id = meeting_room_id
         self.__start_time = start_time
         self.__end_time = end_time
         self.__start_hour = start_hour
         self.__end_hour = end_hour
+        Meeting.__ID += 1
 
     def get_id(self):
         return self.__id
@@ -83,13 +92,22 @@ class EmployeeMeeting(MySQLInsertable):
         self.__employee_id = employee_id
         self.__meeting_id = meeting_id
 
+    def get_employee_id(self):
+        return self.__employee_id
+
+    def get_meeting_id(self):
+        return self.__meeting_id
+
 
 class Symptom(MySQLInsertable):
-    def __init__(self, _id: int, employee_id: str, reported_at: datetime, symptom_id: int):
-        self.__id = _id
+    __ID = 0
+
+    def __init__(self, employee_id: str, reported_at: datetime, symptom_id: int):
+        self.__id = Symptom.__ID
         self.__employee_id = employee_id
         self.__reported_at = reported_at
         self.__symptom_id = symptom_id
+        Symptom.__ID += 1
 
     def get_employee_id(self):
         return self.__employee_id
@@ -99,11 +117,17 @@ class Symptom(MySQLInsertable):
 
 
 class Scan(MySQLInsertable):
-    def __init__(self, _id: int, scanned_at: datetime, employee_id: int, temperature: float):
-        self.__id = _id
+    __ID = 0
+
+    def __init__(self, scanned_at: datetime, employee_id: int, temperature: float):
+        self.__id = Scan.__ID
         self.__scanned_at = scanned_at
         self.__employee_id = employee_id
         self.__temperature = temperature
+        Scan.__ID += 1
+
+    def get_id(self):
+        return self.__id
 
     def get_employee_id(self):
         return self.__employee_id
@@ -111,10 +135,80 @@ class Scan(MySQLInsertable):
     def get_scanned_at(self):
         return self.__scanned_at
 
+
 class Test(MySQLInsertable):
-    def __init__(self, _id: int, location: str, tested_at: datetime, employee_id: int, result: str):
-        self.__id = _id
+    __ID = 0
+
+    def __init__(self, location: str, tested_at: datetime, employee_id: int, notification_id: int, scan_id: int, symptom_id: int, result: str):
+        self.__id = Test.__ID
         self.__location = location
         self.__tested_at = tested_at
         self.__employee_id = employee_id
+        self.__notification_id = notification_id
+        self.__scan_id = scan_id
+        self.__symptom_id = symptom_id
         self.__result = result
+        Test.__ID += 1
+
+    def get_id(self):
+        return self.__id
+
+    def get_employee_id(self):
+        return self.__employee_id
+
+    def get_tested_at(self):
+        return self.__tested_at
+
+    def get_result(self):
+        return self.__result
+
+
+class Case(MySQLInsertable):
+    __ID = 0
+
+    def __init__(self, case_id: int, employee_id: int, date: datetime, resolution: str):
+        self.__id = Case.__ID
+        self.__case_id = case_id
+        self.__employee_id = employee_id
+        self.__date = date
+        self.__resolution = resolution
+        Case.__ID += 1
+
+    def get_id(self):
+        return self.__id
+
+    def get_employee_id(self):
+        return self.__employee_id
+
+    def get_resolution(self):
+        return self.__resolution
+
+
+class HealthStatus(MySQLInsertable):
+    __ID = 0
+
+    def __init__(self, case_id: int, employee_id: int, date: datetime, status: str):
+        self.__id = HealthStatus.__ID
+        self.__case_id = case_id
+        self.__employee_id = employee_id
+        self.__date = date
+        self.__status = status
+        HealthStatus.__ID += 1
+
+
+class Notification(MySQLInsertable):
+    __ID = 0
+
+    def __init__(self, employee_id: int, test_id: int, sent_at: datetime, type: str):
+        self.__id = Notification.__ID
+        self.__employee_id = employee_id
+        self.__test_id = test_id
+        self.__sent_at = sent_at
+        self.__type = type
+        Notification.__ID += 1
+
+    def get_id(self):
+        return self.__id
+
+    def get_employee_id(self):
+        return self.__employee_id
