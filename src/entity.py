@@ -166,9 +166,8 @@ class Test(MySQLInsertable):
 class Case(MySQLInsertable):
     __ID = 0
 
-    def __init__(self, case_id: int, employee_id: int, date: datetime, resolution: str):
+    def __init__(self, employee_id: int, date: datetime, resolution: str):
         self.__id = Case.__ID
-        self.__case_id = case_id
         self.__employee_id = employee_id
         self.__date = date
         self.__resolution = resolution
@@ -183,6 +182,16 @@ class Case(MySQLInsertable):
     def get_resolution(self):
         return self.__resolution
 
+    def get_date(self):
+        return self.__date
+
+    def set_resolution(self, resolution: str):
+        self.__resolution = resolution
+        return self.__resolution
+
+    def set_date(self, date: datetime):
+        self.__date = date
+        return self.__date
 
 class HealthStatus(MySQLInsertable):
     __ID = 0

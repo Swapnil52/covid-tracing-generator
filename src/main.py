@@ -9,8 +9,8 @@ def main():
     config = Config("./config/config.json")
     generator = Generator(config)
     generator.static_tasks()
-    # generator.dump()
     generator.dynamic_tasks()
+    generator.dump()
 
 
 if __name__ == '__main__':
