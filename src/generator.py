@@ -11,6 +11,10 @@ LOCATION_HOSPITAL = "hospital"
 
 STATUS_SICK = "SICK"
 
+STATUS_RESIGNED = "LEFT_WORK"
+
+STATUS_DECEASED = "DECEASED"
+
 STATUS_BACK_TO_WORK = "BACK_TO_WORK"
 
 TEST_RESULT_NEGATIVE = "NEGATIVE"
@@ -86,6 +90,10 @@ class Generator:
             # update cases for each test
             self.__update_cases_for_today(tests)
 
+            resigned_employees, deceased_employees = self.__expel_employees(today)
+            all_employee_ids.difference_update(resigned_employees)
+            all_employee_ids.difference_update(deceased_employees)
+
             # generate health status for sick employees
             health_statuses = self.__generate_health_statuses_for_today(today)
             self.__health_statuses.extend(health_statuses)
@@ -103,6 +111,9 @@ class Generator:
         with open("./sql/employee_meeting.sql", "w") as f:
             for employee_meeting in self.__employee_meetings:
                 f.write("%s\n" % employee_meeting.get_insert_query())
+        with open("./sql/notification.sql", "w") as f:
+            for notification in self.__notifications:
+                f.write("%s\n" % notification.get_insert_query())
         with open("./sql/scan.sql", "w") as f:
             for scan in self.__scans:
                 f.write("%s\n" % scan.get_insert_query())
@@ -249,6 +260,27 @@ class Generator:
                     case = employee_cases.get(employee_id)
                     case.set_resolution(STATUS_BACK_TO_WORK)
                     case.set_date(date)
+
+    def __expel_employees(self, today: datetime):
+        resigned_employees = set()
+        deceased_employees = set()
+        for case in self.__cases:
+            if case.get_resolution() == STATUS_SICK and case.get_date() < today - timedelta(days=self.__config.expel_delay_days):
+                if self.__should_resign():
+                    case.set_resolution(STATUS_RESIGNED)
+                    resigned_employees.add(case.get_employee_id())
+                elif self.__should_decease():
+                    case.set_resolution(STATUS_DECEASED)
+                    deceased_employees.add(case.get_employee_id())
+        return resigned_employees, deceased_employees
+
+    def __should_resign(self) -> bool:
+        i = randint(1, self.__config.resignation_chance_one_in)
+        return i == 1
+
+    def __should_decease(self) -> bool:
+        i = randint(1, self.__config.decease_chance_one_in)
+        return i == 1
 
     def __generate_health_statuses_for_today(self, today: datetime) -> List[HealthStatus]:
         health_statuses = []

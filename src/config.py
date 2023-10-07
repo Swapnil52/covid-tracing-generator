@@ -33,3 +33,6 @@ class Config:
             self.notification_look_back_days = config["notification_look_back_days"]
             self.notification_time_delay_hours = config["notification_time_delay_hours"]
             self.health_status_delay_hours = config["health_status_delay_hours"]
+            self.resignation_chance_one_in = config["resignation_chance_one_in"]
+            self.decease_chance_one_in = config["decease_chance_one_in"]
+            self.expel_delay_days = config["expel_delay_days"]
