@@ -3,7 +3,7 @@ from random import randint, sample, uniform
 from typing import List, Tuple, Set, Dict
 
 from src.config import Config
-from src.entity import Employee, MeetingRoom, Meeting, EmployeeMeeting, Symptom, Scan, Test, Case, Notification, HealthStatus
+from src.entity import Employee, MeetingRoom, Meeting, EmployeeMeeting, Symptom, Scan, Test, EmployeeCase, Notification, HealthStatus
 
 STATUS_WELL = "WELL"
 
@@ -99,34 +99,34 @@ class Generator:
             self.__health_statuses.extend(health_statuses)
 
     def dump(self):
-        with open("./sql/employee.sql", "w") as f:
+        with open("./output/employee.sql", "w") as f:
             for meeting_room in self.__employees:
                 f.write("%s\n" % meeting_room.get_insert_query())
-        with open("./sql/meeting_room.sql", "w") as f:
+        with open("./output/meeting_room.sql", "w") as f:
             for meeting_room in self.__meeting_rooms:
                 f.write("%s\n" % meeting_room.get_insert_query())
-        with open("./sql/meeting.sql", "w") as f:
+        with open("./output/meeting.sql", "w") as f:
             for meeting in self.__meetings:
                 f.write("%s\n" % meeting.get_insert_query())
-        with open("./sql/employee_meeting.sql", "w") as f:
+        with open("./output/employee_meeting.sql", "w") as f:
             for employee_meeting in self.__employee_meetings:
                 f.write("%s\n" % employee_meeting.get_insert_query())
-        with open("./sql/notification.sql", "w") as f:
+        with open("./output/notification.sql", "w") as f:
             for notification in self.__notifications:
                 f.write("%s\n" % notification.get_insert_query())
-        with open("./sql/scan.sql", "w") as f:
+        with open("./output/scan.sql", "w") as f:
             for scan in self.__scans:
                 f.write("%s\n" % scan.get_insert_query())
-        with open("./sql/symptom.sql", "w") as f:
+        with open("./output/symptom.sql", "w") as f:
             for symptom in self.__symptoms:
                 f.write("%s\n" % symptom.get_insert_query())
-        with open("./sql/test.sql", "w") as f:
+        with open("./output/test.sql", "w") as f:
             for test in self.__tests:
                 f.write("%s\n" % test.get_insert_query())
-        with open("./sql/case.sql", "w") as f:
+        with open("./output/employee_case.sql", "w") as f:
             for case in self.__cases:
                 f.write("%s\n" % case.get_insert_query())
-        with open("./sql/health_status.sql", "w") as f:
+        with open("./output/health_status.sql", "w") as f:
             for health_status in self.__health_statuses:
                 f.write("%s\n" % health_status.get_insert_query())
 
@@ -230,7 +230,7 @@ class Generator:
 
     def __generate_tests_for_sick_employees(self, today: datetime, sick_employee_ids: Set[int]):
         tests = []
-        employee_cases: Dict[int, Case] = {case.get_employee_id(): case for case in self.__cases}
+        employee_cases: Dict[int, EmployeeCase] = {case.get_employee_id(): case for case in self.__cases}
         for employee_id in sick_employee_ids:
             case = employee_cases.get(employee_id)
             if case.get_resolution() == STATUS_SICK and case.get_date() < today - timedelta(days=3):
@@ -242,7 +242,7 @@ class Generator:
         return tests
 
     def __update_cases_for_today(self, tests: List[Test]):
-        employee_cases: Dict[int, Case] = {case.get_employee_id(): case for case in self.__cases}
+        employee_cases: Dict[int, EmployeeCase] = {case.get_employee_id(): case for case in self.__cases}
         for test in tests:
             employee_id = test.get_employee_id()
             date = test.get_tested_at() + timedelta(hours=self.__config.case_test_delay_hours)
@@ -253,7 +253,7 @@ class Generator:
                         case.set_resolution(STATUS_SICK)
                         case.set_date(date)
                 else:
-                    case = Case(employee_id, date, STATUS_SICK)
+                    case = EmployeeCase(employee_id, date, STATUS_SICK)
                     self.__cases.append(case)
             else:
                 if employee_id in employee_cases:

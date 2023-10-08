@@ -144,9 +144,9 @@ class Test(MySQLInsertable):
         self.__location = location
         self.__tested_at = tested_at
         self.__employee_id = employee_id
-        self.__notification_id = notification_id
-        self.__scan_id = scan_id
-        self.__symptom_id = symptom_id
+        # self.__notification_id = notification_id
+        # self.__scan_id = scan_id
+        # self.__symptom_id = symptom_id
         self.__result = result
         Test.__ID += 1
 
@@ -163,15 +163,15 @@ class Test(MySQLInsertable):
         return self.__result
 
 
-class Case(MySQLInsertable):
+class EmployeeCase(MySQLInsertable):
     __ID = 0
 
     def __init__(self, employee_id: int, date: datetime, resolution: str):
-        self.__id = Case.__ID
+        self.__id = EmployeeCase.__ID
         self.__employee_id = employee_id
         self.__date = date
         self.__resolution = resolution
-        Case.__ID += 1
+        EmployeeCase.__ID += 1
 
     def get_id(self):
         return self.__id
@@ -192,6 +192,7 @@ class Case(MySQLInsertable):
     def set_date(self, date: datetime):
         self.__date = date
         return self.__date
+
 
 class HealthStatus(MySQLInsertable):
     __ID = 0
