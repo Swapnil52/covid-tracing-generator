@@ -135,18 +135,18 @@ class Scan(MySQLInsertable):
     def get_scanned_at(self):
         return self.__scanned_at
 
+    def get_temperature(self):
+        return self.__temperature
+
 
 class Test(MySQLInsertable):
     __ID = 0
 
-    def __init__(self, location: str, tested_at: datetime, employee_id: int, notification_id: int, scan_id: int, symptom_id: int, result: str):
+    def __init__(self, location: str, tested_at: datetime, employee_id: int, result: str):
         self.__id = Test.__ID
         self.__location = location
         self.__tested_at = tested_at
         self.__employee_id = employee_id
-        # self.__notification_id = notification_id
-        # self.__scan_id = scan_id
-        # self.__symptom_id = symptom_id
         self.__result = result
         Test.__ID += 1
 
@@ -209,12 +209,12 @@ class HealthStatus(MySQLInsertable):
 class Notification(MySQLInsertable):
     __ID = 0
 
-    def __init__(self, employee_id: int, test_id: int, sent_at: datetime, type: str):
+    def __init__(self, employee_id: int, test_id: int, sent_at: datetime, _type: str):
         self.__id = Notification.__ID
         self.__employee_id = employee_id
         self.__test_id = test_id
         self.__sent_at = sent_at
-        self.__type = type
+        self.__type = _type
         Notification.__ID += 1
 
     def get_id(self):
@@ -222,3 +222,6 @@ class Notification(MySQLInsertable):
 
     def get_employee_id(self):
         return self.__employee_id
+
+    def get_type(self):
+        return self.__type

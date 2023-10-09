@@ -82,8 +82,8 @@ class Generator:
             self.__symptoms.extend(symptoms)
 
             # generate tests for the notifications, scans and symptoms
-            tests = self.__generate_tests_for_today(today, mandatory_notifications, scans, symptoms)
-            sick_employee_tests = self.__generate_tests_for_sick_employees(today, sick_employee_ids)
+            tests = self.__generate_tests_for_healthy_employees_today(today, healthy_employee_ids, mandatory_notifications, scans, symptoms)
+            sick_employee_tests = self.__generate_tests_for_sick_employees_today(today, sick_employee_ids)
             self.__tests.extend(tests)
             self.__tests.extend(sick_employee_tests)
 
@@ -224,44 +224,47 @@ class Generator:
             free_employees.remove(selected_employee)
         return [EmployeeMeeting(employee_id, meeting.get_id()) for employee_id in selected_employees]
 
-    def __generate_tests_for_today(self, today: datetime, notifications: List[Notification], scans: List[Scan], symptoms: List[Symptom]):
+    def __generate_tests_for_healthy_employees_today(self, today: datetime, healthy_employee_ids: Set[int], mandatory_notifications: List[Notification], scans: List[Scan], symptoms: List[Symptom]):
         tests = []
-        candidate_employees = {employee.get_id(): dict() for employee in self.__employees}
-        for notification in notifications:
-            candidate_employees.get(notification.get_employee_id())[("%s" % KEY_NOTIFICATION_ID)] = notification.get_id()
+        candidate_employees = {
+            employee_id: dict() for employee_id in healthy_employee_ids
+        }
+        for notification in mandatory_notifications:
+            if notification.get_type() == NOTIFICATION_TYPE_MANDATORY:
+                candidate_employees.get(notification.get_employee_id())[KEY_NOTIFICATION_ID] = notification.get_id()
         for scan in scans:
-            candidate_employees.get(scan.get_employee_id())[("%s" % KEY_SCAN_ID)] = scan.get_id()
+            if scan.get_temperature() >= self.__config.scan_fever_threshold:
+                candidate_employees.get(scan.get_employee_id())[KEY_SCAN_ID] = scan.get_id()
         for symptom in symptoms:
-            candidate_employees.get(symptom.get_employee_id())[("%s" % KEY_SYMPTOM_ID)] = symptom.get_employee_id()
+            candidate_employees.get(symptom.get_employee_id())[KEY_SYMPTOM_ID] = symptom.get_employee_id()
         for employee_id in candidate_employees.keys():
             if len(candidate_employees.get(employee_id)) > 0:
                 location = sample(self.__config.locations, k=1)[0]
-                tested_at = today + timedelta(hours=self.__config.test_delay_hours)
-                notification_id = candidate_employees.get(employee_id).get(KEY_NOTIFICATION_ID, None)
-                scan_id = candidate_employees.get(employee_id).get(KEY_SCAN_ID, None)
-                symptom_id = candidate_employees.get(employee_id).get(KEY_SYMPTOM_ID, None)
+                tested_at = today + timedelta(hours=self.__config.test_delay_hours, minutes=randint(1, 59))
                 result = self.__sample_result()
-                tests.append(Test(location, tested_at, employee_id, notification_id, scan_id, symptom_id, result))
+                tests.append(Test(location, tested_at, employee_id, result))
         return tests
 
-    def __generate_tests_for_sick_employees(self, today: datetime, sick_employee_ids: Set[int]):
+    def __generate_tests_for_sick_employees_today(self, today: datetime, sick_employee_ids: Set[int]):
         tests = []
-        employee_cases: Dict[int, EmployeeCase] = {case.get_employee_id(): case for case in self.__cases}
+        employee_cases: Dict[int, EmployeeCase] = {
+            case.get_employee_id(): case for case in self.__cases
+        }
         for employee_id in sick_employee_ids:
             case = employee_cases.get(employee_id)
-            if case.get_resolution() == STATUS_SICK and case.get_date() < today - timedelta(days=3):
+            if case.get_resolution() == STATUS_SICK and case.get_date() < today - timedelta(days=self.__config.sick_employee_retest_delay_days):
                 employee_id = case.get_employee_id()
                 location = LOCATION_HOSPITAL
-                tested_at = today + timedelta(hours=self.__config.test_delay_hours)
+                tested_at = today + timedelta(hours=self.__config.test_delay_hours, minutes=randint(1, 59))
                 result = TEST_RESULT_NEGATIVE
-                tests.append(Test(location, tested_at, employee_id, -1, -1, -1, result))
+                tests.append(Test(location, tested_at, employee_id, result))
         return tests
 
     def __update_cases_for_today(self, tests: List[Test]):
         employee_cases: Dict[int, EmployeeCase] = {case.get_employee_id(): case for case in self.__cases}
         for test in tests:
             employee_id = test.get_employee_id()
-            date = test.get_tested_at() + timedelta(hours=self.__config.case_test_delay_hours)
+            date = test.get_tested_at() + timedelta(hours=self.__config.case_test_delay_hours, minutes=randint(1, 59))
             if test.get_result() == TEST_RESULT_POSITIVE:
                 if employee_id in employee_cases:
                     case = employee_cases.get(employee_id)
