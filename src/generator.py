@@ -84,11 +84,11 @@ class Generator:
             # generate tests for the notifications, scans and symptoms
             tests = self.__generate_tests_for_healthy_employees_today(today, healthy_employee_ids, mandatory_notifications, scans, symptoms)
             sick_employee_tests = self.__generate_tests_for_sick_employees_today(today, sick_employee_ids)
-            self.__tests.extend(tests)
-            self.__tests.extend(sick_employee_tests)
+            all_tests = tests + sick_employee_tests
+            self.__tests.extend(all_tests)
 
             # update cases for each test
-            self.__update_cases_for_today(tests)
+            self.__update_cases_for_today(all_tests)
 
             resigned_employees, deceased_employees = self.__expel_employees(today)
             all_employee_ids.difference_update(resigned_employees)
@@ -325,18 +325,16 @@ class Generator:
             meeting_rooms.append(self.__meeting_room(idx))
         return meeting_rooms
 
-    @staticmethod
-    def __sample_result():
-        i = randint(1, 7)
-        if i == 7:
+    def __sample_result(self):
+        i = randint(1, self.__config.sickness_probability_den)
+        if i == 1:
             return TEST_RESULT_POSITIVE
         return TEST_RESULT_NEGATIVE
 
-    @staticmethod
-    def __sample_temperature():
-        i = randint(1, 7)
+    def __sample_temperature(self):
+        i = randint(1, self.__config.sickness_probability_den)
         temperature = 98.6
-        if i == 7:
+        if i == 1:
             temperature += uniform(0.5, 4.0)
         return temperature
 

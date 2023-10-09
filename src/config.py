@@ -26,6 +26,7 @@ class Config:
             self.scan_fever_threshold = config["scan_fever_threshold"]
             self.scan_delay_hours = config["scan_delay_hours"]
             self.scan_test_delay = config["scan_test_delay"]
+            self.sickness_probability_den = config["sickness_probability_den"]
             self.test_delay_hours = config["test_delay_hours"]
             self.sick_employee_retest_delay_days = config["sick_employee_retest_delay_days"]
             self.test_results = config["test_results"]

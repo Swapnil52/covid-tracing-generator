@@ -52,10 +52,11 @@
   ],
   "symptom_test_delay": 6,
   "scan_fever_threshold": 100.0,
+  "sickness_probability_den": 5,
   "scan_test_delay": 1,
   "scan_delay_hours": 7,
   "test_delay_hours": 6,
-  "sick_employee_retest_delay_days": 5,
+  "sick_employee_retest_delay_days": 7,
   "test_results": [
     "POSITIVE",
     "NEGATIVE"
