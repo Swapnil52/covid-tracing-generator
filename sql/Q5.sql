@@ -1,5 +1,4 @@
 -- Which test lead to the greatest number of mandatory notifications and to which employee did that test belong?
-
 SELECT `test_id`, `test`.`employee_id` AS `originating_employee`, `result`, `notification_count`
 FROM (
 	SELECT `test_id`, COUNT(*) AS `notification_count`
