@@ -15,6 +15,8 @@ LOCATION_HOSPITAL = "hospital"
 
 STATUS_SICK = "SICK"
 
+STATUS_HOSPITALISED = "HOSPITALISED"
+
 STATUS_RESIGNED = "LEFT_WORK"
 
 STATUS_DECEASED = "DECEASED"
@@ -306,12 +308,24 @@ class Generator:
         for case in self.__cases:
             case_id = case.get_id()
             employee_id = case.get_employee_id()
-            date = today + timedelta(hours=self.__config.health_status_delay_hours)
+            date = case.get_date() + timedelta(hours=self.__config.health_status_delay_hours)
             if case.get_resolution() == STATUS_SICK:
-                health_statuses.append(HealthStatus(case_id, employee_id, date, STATUS_SICK))
+                health_statuses.append(HealthStatus(case_id, employee_id, date, self.__sample_sick_health_status(employee_id)))
             elif case.get_resolution() == STATUS_BACK_TO_WORK:
                 health_statuses.append(HealthStatus(case_id, employee_id, date, STATUS_WELL))
         return health_statuses
+
+    def __sample_sick_health_status(self, employee_id: int) -> str:
+        employee_health_statuses = [
+            health_status for health_status in self.__health_statuses
+            if health_status.get_employee_id() == employee_id
+        ]
+        employee_health_statuses.sort(key=lambda hs: hs.get_date(), reverse=True)
+        if len(employee_health_statuses) == 0:
+            return sample([STATUS_SICK, STATUS_HOSPITALISED], k=1)[0]
+        elif employee_health_statuses[0] == STATUS_HOSPITALISED:
+            return STATUS_HOSPITALISED
+        return STATUS_SICK
 
     def __generate_employees(self) -> list:
         employees = []

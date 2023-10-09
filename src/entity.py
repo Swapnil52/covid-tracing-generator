@@ -205,6 +205,15 @@ class HealthStatus(MySQLInsertable):
         self.__status = status
         HealthStatus.__ID += 1
 
+    def get_employee_id(self):
+        return self.__employee_id
+
+    def get_date(self):
+        return self.__date
+
+    def get_status(self):
+        return self.__status
+
 
 class Notification(MySQLInsertable):
     __ID = 0
