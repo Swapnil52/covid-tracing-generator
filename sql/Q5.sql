@@ -9,5 +9,5 @@ FROM (
 ) `test_notification_count`
 JOIN `test`
 ON `test_id` = `test`.`id`
-ORDER BY `test_notification_count`.`count` DESC
+ORDER BY `test_notification_count`.`notification_count` DESC
 LIMIT 1;
