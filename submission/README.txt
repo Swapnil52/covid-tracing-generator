@@ -3,8 +3,8 @@ Swapnil Dhanwal
 USC ID: 3557859266
 
 Submission Notes:
-1. Please use MySQL Ver 8.1.0 locally
-2. Please run the create and use database command mentioned in Q1.sql, along with the create table and insert queries
+- Please use online MySQL compiler (https://www.mycompiler.io/new/mysql)
+- If using https://www.mycompiler.io/new/mysql, please paste and run all queries from Q1.sql to Q5.sql in the same editor/session
 
 Assumptions:
 - There are 25 employees in the company

@@ -1,4 +1,5 @@
--- Please use MySQL Ver 8.1.0 locally
+-- Please use online MySQL compiler (https://www.mycompiler.io/new/mysql)
+-- If using https://www.mycompiler.io/new/mysql, please paste and run all queries from Q1.sql to Q5.sql in the same editor/session
 
 -- Which test lead to the greatest number of mandatory notifications and to which employee did that test belong?
 -- This can be done by counting the number of notifications per test_id using a group by query, joining with the test table on test_id,

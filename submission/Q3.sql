@@ -1,4 +1,5 @@
--- Please use MySQL Ver 8.1.0 locally
+-- Please use online MySQL compiler (https://www.mycompiler.io/new/mysql)
+-- If using https://www.mycompiler.io/new/mysql, please paste and run all queries from Q1.sql to Q5.sql in the same editor/session
 
 -- The sickest floor can be said to be the the floor which had the most number of distinct employees who either self reported a symptom or had a positive test
 -- This can be calculated by taking the union of the distinct employee IDs who reported a symptom and had a positive test, followed by joining with the employee table,
