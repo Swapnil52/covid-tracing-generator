@@ -1,3 +1,8 @@
+-- Please use MySQL Ver 8.1.0 locally
+
+CREATE DATABASE `hw2_swapnil_dhanwal`;
+USE `hw2_swapnil_dhanwal`;
+
 CREATE TABLE `employee` (
     `id` INT NOT NULL,
     `name` VARCHAR(255) NOT NULL,
