@@ -68,7 +68,7 @@
   ],
   "case_test_delay_hours": 2,
   "notification_look_back_days": 3,
-  "notification_time_delay_hours": 2,
+  "notification_test_delay_days": 1,
   "health_status_delay_hours": 19,
   "resignation_chance_one_in": 7,
   "decease_chance_one_in": 8,

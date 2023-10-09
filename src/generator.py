@@ -5,6 +5,10 @@ from typing import List, Tuple, Set, Dict
 from src.config import Config
 from src.entity import Employee, MeetingRoom, Meeting, EmployeeMeeting, Symptom, Scan, Test, EmployeeCase, Notification, HealthStatus
 
+NOTIFICATION_TYPE_OPTIONAL = "OPTIONAL"
+
+NOTIFICATION_TYPE_MANDATORY = "MANDATORY"
+
 STATUS_WELL = "WELL"
 
 LOCATION_HOSPITAL = "hospital"
@@ -42,10 +46,6 @@ class Generator:
         self.__cases = []
         self.__health_statuses = []
 
-    def generate(self):
-        self.__employees = self.__generate_employees()
-        self.__meeting_rooms = self.__generate_meeting_rooms()
-
     def static_tasks(self):
         self.__employees = self.__generate_employees()
         self.__meeting_rooms = self.__generate_meeting_rooms()
@@ -57,11 +57,11 @@ class Generator:
             # current date is the start date plus
             today = self.__config.start_day + timedelta(days=day_delta)
 
-            sick_employee_ids = {case.get_employee_id() for case in self.__cases if case.get_resolution() == STATUS_SICK}
+            sick_employee_ids = {
+                case.get_employee_id() for case in self.__cases
+                if case.get_resolution() == STATUS_SICK
+            }
             healthy_employee_ids = all_employee_ids.difference(sick_employee_ids)
-
-            # overall healthy and sick employees should be mutually exclusive
-            assert len(sick_employee_ids.intersection(healthy_employee_ids)) == 0
 
             # generate meetings and assign them to employees
             meetings, assignments = self.__generate_meetings_for_today(today, healthy_employee_ids)
@@ -69,7 +69,7 @@ class Generator:
             self.__employee_meetings.extend(assignments)
 
             # generate notifications for the above employees
-            mandatory_notifications, optional_notifications = self.__generate_notifications_for_today(today, tests)
+            mandatory_notifications, optional_notifications = self.__generate_notifications_for_today(today, tests, healthy_employee_ids)
             self.__notifications.extend(mandatory_notifications)
             self.__notifications.extend(optional_notifications)
 
@@ -130,36 +130,52 @@ class Generator:
             for health_status in self.__health_statuses:
                 f.write("%s\n" % health_status.get_insert_query())
 
-    def __generate_notifications_for_today(self, today: datetime, tests: List[Test]):
+    def __generate_notifications_for_today(self, today: datetime, tests: List[Test], healthy_employee_ids: Set[int]):
         mandatory_notifications = []
         optional_notifications = []
         for test in tests:
+            assert test.get_tested_at() >= today - timedelta(days=self.__config.notification_test_delay_days)
             if test.get_result() == TEST_RESULT_POSITIVE:
-                _mandatory_notifications, _optional_notifications = self.__generate_notifications_for_test(today, test)
+                _mandatory_notifications, _optional_notifications = self.__generate_notifications_for_test(test, healthy_employee_ids)
                 mandatory_notifications.extend(_mandatory_notifications)
                 optional_notifications.extend(_optional_notifications)
         return mandatory_notifications, optional_notifications
 
-    def __generate_notifications_for_test(self, today: datetime, test: Test) -> Tuple[List[Notification], List[Notification]]:
+    def __generate_notifications_for_test(self, test: Test, healthy_employee_ids: Set[int]) -> Tuple[List[Notification], List[Notification]]:
         sick_employee = [employee for employee in self.__employees if employee.get_id() == test.get_employee_id()][0]
         sick_employee_id = test.get_employee_id()
+        sent_at = test.get_tested_at() + timedelta(days=self.__config.notification_test_delay_days)
 
-        # Meetings attended by the employee in the past 3 days
-        all_impacted_meeting_ids = {employee_meeting.get_meeting_id() for employee_meeting in self.__employee_meetings if employee_meeting.get_employee_id() == sick_employee_id}
+        all_impacted_meeting_ids = {
+            employee_meeting.get_meeting_id() for employee_meeting in self.__employee_meetings
+            if employee_meeting.get_employee_id() == sick_employee_id
+        }
+        impacted_meetings_ids = {
+            meeting.get_id() for meeting in self.__meetings
+            if meeting.get_id() in all_impacted_meeting_ids
+            and meeting.get_start_time() >= (test.get_tested_at() - timedelta(days=self.__config.notification_look_back_days))
+        }
+        mandatory_notified_employee_ids = {
+            employee_meeting.get_employee_id() for employee_meeting in self.__employee_meetings
+            if employee_meeting.get_meeting_id() in impacted_meetings_ids
+            and employee_meeting.get_employee_id() != sick_employee_id
+            and employee_meeting.get_employee_id() in healthy_employee_ids
+        }
+        mandatory_notifications = [
+            Notification(employee_id, test.get_id(), sent_at, NOTIFICATION_TYPE_MANDATORY) for employee_id in mandatory_notified_employee_ids
+            if employee_id != sick_employee_id
+        ]
 
-        # Mandatory notifications
-        impacted_meetings_ids = {meeting.get_id() for meeting in self.__meetings if
-                                 meeting.get_id() in all_impacted_meeting_ids and meeting.get_start_time() >= (test.get_tested_at() - timedelta(days=self.__config.notification_look_back_days))}
-        mandatory_notified_employee_ids = {employee_meeting.get_employee_id() for employee_meeting in self.__employee_meetings if
-                                           employee_meeting.get_meeting_id() in impacted_meetings_ids and employee_meeting.get_employee_id() != sick_employee_id}
-        mandatory_notifications = [Notification(employee_id, test.get_id(), test.get_tested_at() + timedelta(days=1), "MANDATORY") for employee_id in mandatory_notified_employee_ids if
-                                   employee_id != sick_employee_id]
-
-        # Optional notifications
         impacted_floor_number = sick_employee.get_floor_number()
-        optional_notified_employee_ids = {employee.get_id() for employee in self.__employees if employee.get_floor_number() == impacted_floor_number}
-        optional_notifications = [Notification(employee_id, test.get_id(), today + timedelta(hours=self.__config.notification_time_delay_hours), "OPTIONAL") for employee_id in
-                                  optional_notified_employee_ids if employee_id != sick_employee_id]
+        optional_notified_employee_ids = {
+            employee.get_id() for employee in self.__employees
+            if employee.get_floor_number() == impacted_floor_number
+            and employee.get_id() in healthy_employee_ids
+        }
+        optional_notifications = [
+            Notification(employee_id, test.get_id(), sent_at, NOTIFICATION_TYPE_OPTIONAL) for employee_id in optional_notified_employee_ids
+            if employee_id != sick_employee_id
+        ]
 
         return mandatory_notifications, optional_notifications
 

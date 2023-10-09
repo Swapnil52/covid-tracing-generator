@@ -31,7 +31,7 @@ class Config:
             self.initial_resolutions = config["initial_resolutions"]
             self.terminal_resolutions = config["terminal_resolutions"]
             self.notification_look_back_days = config["notification_look_back_days"]
-            self.notification_time_delay_hours = config["notification_time_delay_hours"]
+            self.notification_test_delay_days = config["notification_test_delay_days"]
             self.health_status_delay_hours = config["health_status_delay_hours"]
             self.resignation_chance_one_in = config["resignation_chance_one_in"]
             self.decease_chance_one_in = config["decease_chance_one_in"]
