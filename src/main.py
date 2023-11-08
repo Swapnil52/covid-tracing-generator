@@ -1,7 +1,4 @@
-import datetime
-
 from src.config import Config
-from src.entity import Notification, Employee
 from src.generator import Generator
 
 
