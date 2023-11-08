@@ -15,8 +15,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-    #
-    # d1 = datetime.datetime(year=2023, month=9, day=30)
-    # d2 = datetime.datetime(year=2023, month=9, day=26)
-    #
-    # print(d2 >= (d1 - datetime.timedelta(days=5)))
