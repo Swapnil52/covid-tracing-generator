@@ -1,5 +1,5 @@
 # covid-tracing-generator
-Configurable covid tracing data generator for CSCI 585 HW2, which simulates the following:
+Configurable covid tracing data generator, which simulates the following:
 - Random generation of employees
 - Random generation of meeting rooms
 - For each day from the start day till last day:
